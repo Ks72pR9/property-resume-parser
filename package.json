@@ -1,0 +1,17 @@
+{
+  "name": "property-resume-parser",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/property_parse_service.ts",
+    "test": "NODE_ENV=test tsx test/property_parse_service.test.ts"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.3"
+  }
+}
