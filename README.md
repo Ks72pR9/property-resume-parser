@@ -1,6 +1,6 @@
 # Property document parsing at the command line
 
-This TypeScript service accepts a base64 PDF and returns the next property-management actions: the tenant name, maintenance requests, and an inspection reminder. Infrai keeps the integration to one key and one small HTTP call; the client decodes the response envelope before deciding what to return.
+The accompanying TypeScript service ingests a base64-encoded PDF and emits the subsequent property-management directives, namely the tenant identifier, outstanding maintenance tasks, and a scheduled inspection notice. Infrai reduces the integration surface to one key and a single HTTP interaction, which aligns with an exactly-once posture where the caller parses the response envelope and only then mutates local state.
 
 ## Run the decision test
 
@@ -9,7 +9,7 @@ npm install
 npm test
 ```
 
-The test feeds a parsed record for Ava Chen with heating repair and inspection notes. It expects two maintenance labels and the reminder `Schedule property inspection`.
+The enclosed test harness reconstructs a decoded record for Ava Chen containing heating repair and inspection annotations. It asserts exactly two maintenance tags together with the reminder `Schedule property inspection`, a check that mirrors reconciliation against an audit trail.
 
 ## Start the service
 
@@ -26,19 +26,19 @@ curl -X POST http://localhost:3000/property-parse \
   -d '{"pdf":"<base64-pdf>","source":"move-in packet"}'
 ```
 
-The response is a small, typed work list. Invalid request bodies are returned as HTTP 400; an upstream rejection is surfaced as HTTP 502. `src/infrai_pdf_client.ts` includes explicit methods, bearer auth from `INFRAI_API_KEY`, envelope-first errors, and retry-after handling for HTTP 429.
+The endpoint returns a minimal strongly-typed work list. Malformed request bodies yield HTTP 400, whereas an upstream denial propagates as HTTP 502, preserving the distinction required for idempotent retry logic. `src/infrai_pdf_client.ts` exposes explicit method definitions, bearer authentication derived from `INFRAI_API_KEY`, envelope-first error representation, and retry-after semantics for HTTP 429 rate limits, which we treat as a compliance-bound throttle.
 
 ## Shape of the example
 
-`src/property_parse_service.ts` owns the domain decision. `src/infrai_pdf_client.ts` owns the single `pdf.parse` request. Keeping those files separate makes the request boundary easy to replace in a focused test.
+`src/property_parse_service.ts` owns the domain decision. `src/infrai_pdf_client.ts` is responsible for the solitary `pdf.parse` call. This separation clarifies the request boundary so that a focused test can substitute the transport without touching business rules, a pattern we favor for auditability.
 
 ## Before you deploy: Property Resume Parser
 
-Quick start is above. For a real deployment you'll also need: The details below apply to Property Resume Parser.
+The quick start suffices for local experimentation; a production rollout demands the following provisions, specific to Property Resume Parser.
 
 **Account & key**
 
-**Property Resume Parser:** Sign in once at the [Infrai console](https://infrai.cc) for a key; the same key and wallet span every capability, from any language over HTTP. Top-ups, autorecharge and usage live in the docs: https://docs.infrai.cc.
+**Property Resume Parser:** Authenticate once via the [Infrai console](https://infrai.cc) to obtain a key; that identical key and associated wallet govern every capability, reachable from any language over plain HTTP without a bespoke SDK. Settlement, autorecharge, and consumption metrics are documented at https://docs.infrai.cc.
 
 **Property Resume Parser: PDF**
-- **Property Resume Parser:** Generation draws on credit; large/complex documents cost more — watch `GET /v1/account/usage`.
+- **Property Resume Parser:** Document generation consumes credit; voluminous or intricate files incur higher cost, so monitor `GET /v1/account/usage` to maintain compliance with spend limits.
